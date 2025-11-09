@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Status Monitor</title>
+  <title>ESP32 Presence Monitor</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -29,9 +29,14 @@
 
   <script>
     const statusEl = document.getElementById('status');
-    const ws = new WebSocket(`ws://${window.location.hostname}:8080`);
+
+    // Auto-detect ws:// for local dev, wss:// for deployed (Render, HTTPS)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => console.log('[WS] Connected to server');
+
     ws.onmessage = (event) => {
       console.log('Message from server:', event.data);
       if (event.data === 'ONLINE') {
@@ -42,6 +47,7 @@
         statusEl.style.color = 'red';
       }
     };
+
     ws.onclose = () => {
       statusEl.textContent = 'DISCONNECTED';
       statusEl.style.color = 'gray';
