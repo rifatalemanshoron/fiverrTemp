@@ -1,57 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ESP32 Presence Monitor</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 100px;
-      background: #f0f0f0;
-    }
-    h1 {
-      font-size: 2em;
-      color: #333;
-    }
-    #status {
-      font-size: 3em;
-      font-weight: bold;
-      color: red;
-      margin-top: 20px;
-    }
-  </style>
-</head>
-<body>
-  <h1>ESP32 Presence Status</h1>
-  <div id="status">OFFLINE</div>
-
-  <script>
-    const statusEl = document.getElementById('status');
-
-    // Auto-detect ws:// for local dev, wss:// for deployed (Render, HTTPS)
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => console.log('[WS] Connected to server');
-
-    ws.onmessage = (event) => {
-      console.log('Message from server:', event.data);
-      if (event.data === 'ONLINE') {
-        statusEl.textContent = 'ONLINE';
-        statusEl.style.color = 'green';
-      } else if (event.data === 'OFFLINE') {
-        statusEl.textContent = 'OFFLINE';
-        statusEl.style.color = 'red';
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ESP32 Presence Monitor</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding-top: 100px;
+        background: #f0f0f0;
       }
-    };
+      h1 {
+        font-size: 2em;
+        color: #333;
+      }
+      #status {
+        font-size: 3em;
+        font-weight: bold;
+        color: red;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ESP32 Presence Status</h1>
+    <div id="status">OFFLINE</div>
 
-    ws.onclose = () => {
-      statusEl.textContent = 'DISCONNECTED';
-      statusEl.style.color = 'gray';
-    };
-  </script>
-</body>
+    <script>
+      const statusEl = document.getElementById("status");
+
+      // Auto-detect ws:// for local dev, wss:// for deployed (Render, HTTPS)
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${proto}//${location.host}/ws`);
+      ws.onopen = () => console.log("[WS] Connected to server");
+
+      ws.onmessage = (event) => {
+        console.log("Message from server:", event.data);
+        if (event.data === "ONLINE") {
+          statusEl.textContent = "ONLINE";
+          statusEl.style.color = "green";
+        } else if (event.data === "OFFLINE") {
+          statusEl.textContent = "OFFLINE";
+          statusEl.style.color = "red";
+        }
+      };
+
+      ws.onclose = () => {
+        statusEl.textContent = "DISCONNECTED";
+        statusEl.style.color = "gray";
+      };
+    </script>
+  </body>
 </html>

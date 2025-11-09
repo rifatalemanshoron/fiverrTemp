@@ -7,41 +7,38 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// Serve static site
-app.use(express.static(path.join(__dirname, 'public')));
+// 👇 add a stable path and turn off perMessageDeflate (avoids ESP quirks)
+const wss = new WebSocket.Server({
+  server,
+  path: '/ws',
+  perMessageDeflate: false
+});
 
-// Basic health check for Render
-app.get('/health', (_req, res) => res.status(200).send('ok'));
+app.use(express.static(path.join(__dirname, 'public'))); // serve index.html
 
-// Create WS server on a stable path
-const wss = new WebSocket.Server({ server, path: '/ws' });
-
-// Heartbeat helpers
+// heartbeat
 function noop() {}
 function heartbeat() { this.isAlive = true; }
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
   ws.isAlive = true;
   ws.on('pong', heartbeat);
-
-  console.log('Client connected');
+  console.log('Client connected', req.url);
 
   ws.on('message', (msg) => {
     const text = msg.toString();
     console.log('RX:', text);
 
-    // Broadcast to all connected clients
+    // broadcast to all clients
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(text);
-      }
+      if (client.readyState === WebSocket.OPEN) client.send(text);
     });
   });
 
   ws.on('close', () => console.log('Client disconnected'));
 });
 
-// Ping clients periodically to detect dead sockets
+// ping every 30s to keep socket alive through proxies
 const interval = setInterval(() => {
   wss.clients.forEach((ws) => {
     if (!ws.isAlive) return ws.terminate();
@@ -52,6 +49,5 @@ const interval = setInterval(() => {
 
 wss.on('close', () => clearInterval(interval));
 
-// Required for Render: listen on PORT and 0.0.0.0
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, '0.0.0.0', () => console.log(`Server running on ${PORT}`));
